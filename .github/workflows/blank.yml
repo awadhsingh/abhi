@@ -1,0 +1,59 @@
+नाम: अमेज़नआरडीपी
+
+चालू: वर्कफ़्लो_डिस्पैच
+
+नौकरियां:
+
+  निर्माण:
+
+    रन-ऑन: विंडोज़-नवीनतम
+
+    समयबाह्य-मिनट: 9999
+
+    कदम:
+
+    - नाम: Ngrok डाउनलोड कर रहा है।
+
+      भागो: |
+
+        Invoke-WebRequest https://raw.githubusercontent.com/romain09/AWS-RDP/main/ngrok-stable-windows-amd64.zip -OutFile ngrok.zip
+
+        Invoke-WebRequest https://raw.githubusercontent.com/romain09/AWS-RDP/main/start.bat -OutFile start.bat
+
+    - नाम: Ngrok फ़ाइलें निकालना।
+
+      रन: एक्सपैंड-आर्काइव ngrok.zip
+
+    - नाम: आपके Ngrok खाते से जुड़ रहा है।
+
+      रन: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+
+      पर्यावरण:
+
+        NGROK_AUTH_TOKEN: ${{ रहस्य.NGROK_AUTH_TOKEN }}
+
+    - नाम: आरडीपी पहुंच को सक्रिय करना।
+
+      भागो: | 
+
+        सेट-आइटमप्रॉपर्टी-पथ 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-नाम "fDenyTSConnections" -मान 0
+
+        सक्षम-नेटफ़ायरवॉल नियम-डिस्प्लेग्रुप "दूरस्थ डेस्कटॉप"
+
+        सेट-आइटमप्रॉपर्टी-पथ 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -नाम "UserAuthentication" -Value 1
+
+    - नाम: सुरंग बनाना।
+
+      रन: स्टार्ट-प्रोसेस पॉवरशेल-आर्ग्यूमेंटलिस्ट '-नोएक्सिट-कमांड ".\ngrok\ngrok.exe tcp 3389"'
+
+    - नाम: अपने आरडीपी से जुड़ना।
+
+      रन: cmd /c start.bat
+
+    - नाम: आरडीपी तैयार है!
+
+      भागो: | 
+
+        Invoke-WebRequest https://raw.githubusercontent.com/romain09/AWS-RDP/main/loop.ps1 -OutFile loop.ps1
+
+        ./loop.ps1
